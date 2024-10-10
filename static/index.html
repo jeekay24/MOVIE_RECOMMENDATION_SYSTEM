@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendations</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { text-align: center; max-width: 600px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        header h1 { font-size: 2rem; color: #007bff; }
+        header p { color: #666; margin-top: 5px; }
+        .form-section { display: flex; margin: 20px 0; }
+        input[type="text"] { flex: 1; padding: 10px; font-size: 1rem; border-radius: 4px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; background-color: #007bff; color: #fff; border-radius: 4px; border: none; cursor: pointer; margin-left: 10px; }
+        .recommendations { text-align: left; margin-top: 20px; }
+        .recommendations div { background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+        .loading { font-style: italic; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Movie Recommendations</h1>
+            <p>Enter your User ID to get movie recommendations</p>
+        </header>
+        <div class="form-section">
+            <input type="text" id="user_id" placeholder="Enter your User ID">
+            <button onclick="getRecommendations()">Get Recommendations</button>
+        </div>
+        <div id="requested-movie" class="recommendations"></div>
+        <div id="recommendations" class="recommendations"></div>
+    </div>
+    <script>
+        async function getRecommendations() {
+            const userId = document.getElementById('user_id').value.trim();
+            const recommendationsDiv = document.getElementById('recommendations');
+            
+            recommendationsDiv.innerHTML = '';
+
+            if (!userId || isNaN(userId)) {
+                alert('Please enter a valid numeric User ID');
+                return;
+            }
+
+            recommendationsDiv.innerHTML = '<p class="loading">Loading recommendations...</p>';
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                const data = await response.json();
+
+                if (data.error) {
+                    recommendationsDiv.innerHTML = '';
+                    return;
+                }
+                
+                recommendationsDiv.innerHTML = data.recommendations.map(movie => `
+                    <div>
+                        <h3>${movie.title}</h3>
+                        <p>Genre: ${movie.genre}</p>
+                        <p>Score: ${movie.score}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                recommendationsDiv.innerHTML = '<p>Error fetching recommendations. Please try again later.</p>';
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
